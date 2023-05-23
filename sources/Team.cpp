@@ -93,7 +93,7 @@ namespace ariel{
 
 
 
- void Team::attack(Team* enemyTeam) {
+void Team::attack(Team* enemyTeam) {
    
     if (enemyTeam == nullptr) {
         throw std::invalid_argument("Null pointer to enemy team");
@@ -102,7 +102,7 @@ namespace ariel{
         throw std::runtime_error("Cannot attack yourself");
     }
     if (stillAlive() == 0) {
-        //throw std::runtime_error("The team is dead.");
+        throw std::runtime_error("The team is dead.");
     }
     if (enemyTeam->stillAlive() == 0) {
         throw std::runtime_error("The enemy team is dead.");
@@ -110,13 +110,13 @@ namespace ariel{
     
     Character* closestEnemy = nullptr;
 
-    if (!this->Boss->isAlive()) {
+    if (!this->getBoss()->isAlive()) {
         // Find the closest alive teammate and appoint them as the new captain
         double minTeammateDistance = std::numeric_limits<double>::max();
         Character* closestTeammate = nullptr;
-        for (Character* teammate : Warriors) {
-            if (teammate != Boss && teammate->isAlive()) {
-                double distance = Boss->distance(teammate);
+        for (Character* teammate : getWarriors()) {
+            if (teammate->isAlive()) {
+                double distance = getBoss()->distance(teammate);
                 if (distance < minTeammateDistance) {
                     minTeammateDistance = distance;
                     closestTeammate = teammate;
@@ -132,7 +132,7 @@ namespace ariel{
         double minDistance = std::numeric_limits<double>::max();
         for (Character* enemy : enemyTeam->getWarriors()) {
             if (enemy->isAlive()) {
-                double distance = this->Boss->distance(enemy);
+                double distance = this->getBoss()->distance(enemy);
                 if (distance < minDistance) {
                     minDistance = distance;
                     closestEnemy = enemy;
@@ -147,13 +147,31 @@ namespace ariel{
     }
 
     // Attack the closest alive enemy
-    for (Character* attacker : Warriors) {
-       
+    for (Character* attacker : getWarriors()) { 
         if (attacker->isAlive() && closestEnemy->isAlive()) {
             if (Cowboy* cowboy = dynamic_cast<Cowboy*>(attacker)) {
                 if (cowboy->hasboolets()) {
                     // Shoot the enemy
                     cowboy->shoot(closestEnemy);
+
+                    
+                            if (!enemyTeam->getBoss()->isAlive()) {
+        // Find the closest alive teammate and appoint them as the new captain
+        double minTeammateDistance = std::numeric_limits<double>::max();
+        Character* closestTeammate = nullptr;
+        for (Character* teammate : enemyTeam->getWarriors()) {
+            if (teammate->isAlive()) {
+                double distance = enemyTeam->getBoss()->distance(teammate);
+                if (distance < minTeammateDistance) {
+                    minTeammateDistance = distance;
+                    closestTeammate = teammate;
+                }
+            }
+        }
+        if (closestTeammate != nullptr) {
+            enemyTeam->setBoss(closestTeammate);
+        } 
+    }  
                 } else if (!cowboy->hasboolets()) {
                     // Reload weapon
                     cowboy->reload();
@@ -189,9 +207,9 @@ namespace ariel{
         if (!this->getBoss()->isAlive()) {
             Character* closest = nullptr;
             double minDistance = std::numeric_limits<double>::max();
-            for (Character* member : Warriors) {
-                if (member != Boss) {
-                    double distance = Boss->distance(member);
+            for (Character* member : getWarriors()) {
+                if (member != getBoss()) {
+                    double distance = getBoss()->distance(member);
                     if (distance < minDistance) {
                         minDistance = distance;
                         closest = member;
@@ -205,21 +223,24 @@ namespace ariel{
             }
         }
             if (closestEnemy == nullptr || !closestEnemy->isAlive()) {
-                // Find the closest alive enemy to the attacking captain
-                double minDistance = std::numeric_limits<double>::max();
-                for (Character* enemy : enemyTeam->getWarriors()) {
-                    if (enemy->isAlive()) {
-                        double distance = this->Boss->distance(enemy);
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            closestEnemy = enemy;
-                        }
-                    } 
-                }
+            // Find the closest alive enemy to the attacking captain
+            double minDistance = std::numeric_limits<double>::max();
+            for (Character* enemy : enemyTeam->getWarriors()) {
+                if (enemy->isAlive()) {
+                    double distance = this->getBoss()->distance(enemy);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestEnemy = enemy;
+                    }
+                } 
+            }
             }
     }
 
 }
+
+
+
         
         
         Character* Team::getBoss() {
