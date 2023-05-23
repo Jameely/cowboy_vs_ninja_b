@@ -65,6 +65,8 @@ namespace ariel{
             this->Warriors.push_back(character);
             num_w += 1;
             character->setplay();
+            sortCowboysFirst(Warriors);
+
         }
 
 
@@ -94,7 +96,6 @@ namespace ariel{
 
 
 void Team::attack(Team* enemyTeam) {
-   
     if (enemyTeam == nullptr) {
         throw std::invalid_argument("Null pointer to enemy team");
     }
@@ -109,11 +110,13 @@ void Team::attack(Team* enemyTeam) {
     }
     
     Character* closestEnemy = nullptr;
+    Character* closestTeammate = nullptr;
+
 
     if (!this->getBoss()->isAlive()) {
         // Find the closest alive teammate and appoint them as the new captain
         double minTeammateDistance = std::numeric_limits<double>::max();
-        Character* closestTeammate = nullptr;
+        closestTeammate = nullptr;
         for (Character* teammate : getWarriors()) {
             if (teammate->isAlive()) {
                 double distance = getBoss()->distance(teammate);
@@ -127,12 +130,14 @@ void Team::attack(Team* enemyTeam) {
             setBoss(closestTeammate);
         } 
     }
+
+
     if (closestEnemy == nullptr || !closestEnemy->isAlive()) {
         // Find the closest alive enemy to the attacking captain
         double minDistance = std::numeric_limits<double>::max();
         for (Character* enemy : enemyTeam->getWarriors()) {
-            if (enemy->isAlive()) {
-                double distance = this->getBoss()->distance(enemy);
+            if (enemy->isAlive() && enemy!=nullptr ) {
+                double distance = (this->getBoss())->distance(enemy);
                 if (distance < minDistance) {
                     minDistance = distance;
                     closestEnemy = enemy;
@@ -141,50 +146,51 @@ void Team::attack(Team* enemyTeam) {
         }
     }
 
-    // If there are no alive enemies or no alive members in the attacking team, the attack ends
-    if (closestEnemy == nullptr) {
-        return;
-    }
 
     // Attack the closest alive enemy
     for (Character* attacker : getWarriors()) { 
-        if (attacker->isAlive() && closestEnemy->isAlive()) {
+        // If there are no alive enemies or no alive members in the attacking team, the attack ends
+        if (closestEnemy == nullptr) {
+            return;
+        }
+
+        if (attacker->isAlive() && closestEnemy->isAlive() && attacker!=nullptr && closestEnemy != nullptr) {
+            // if the temmate is cowboy :
             if (Cowboy* cowboy = dynamic_cast<Cowboy*>(attacker)) {
                 if (cowboy->hasboolets()) {
                     // Shoot the enemy
                     cowboy->shoot(closestEnemy);
 
-                    
-                            if (!enemyTeam->getBoss()->isAlive()) {
-        // Find the closest alive teammate and appoint them as the new captain
-        double minTeammateDistance = std::numeric_limits<double>::max();
-        Character* closestTeammate = nullptr;
-        for (Character* teammate : enemyTeam->getWarriors()) {
-            if (teammate->isAlive()) {
-                double distance = enemyTeam->getBoss()->distance(teammate);
-                if (distance < minTeammateDistance) {
-                    minTeammateDistance = distance;
-                    closestTeammate = teammate;
+                        if (!enemyTeam->getBoss()->isAlive()) {
+                            // Find the closest alive teammate and appoint them as the new captain
+                            double minTeammateDistance = std::numeric_limits<double>::max();
+                            Character* closestTeammate = nullptr;
+                            for (Character* teammate : enemyTeam->getWarriors()) {
+                                if (teammate->isAlive()) {
+                                    double distance = enemyTeam->getBoss()->distance(teammate);
+                                    if (distance < minTeammateDistance) {
+                                        minTeammateDistance = distance;
+                                        closestTeammate = teammate;
                 }
             }
         }
+                        }
         if (closestTeammate != nullptr) {
             enemyTeam->setBoss(closestTeammate);
-        } 
-    }  
+        }   
                 } else if (!cowboy->hasboolets()) {
                     // Reload weapon
                     cowboy->reload();
                 }
             }
-            if (Ninja* ninja = dynamic_cast<Ninja*>(attacker)) {
+            else if (Ninja* ninja = dynamic_cast<Ninja*>(attacker)) {
                 if (ninja->distance(closestEnemy) < 1 && closestEnemy->isAlive()) {
                     ninja->slash(closestEnemy);
-                } else {
+                }
+                else {
                     ninja->move(closestEnemy);
                 }
             }
-        }
 
         if (closestEnemy != nullptr && !enemyTeam->getBoss()->isAlive()) {
             Character* closest = nullptr;
@@ -236,12 +242,9 @@ void Team::attack(Team* enemyTeam) {
             }
             }
     }
-
+    }
 }
 
-
-
-        
         
         Character* Team::getBoss() {
             return Boss;
@@ -249,6 +252,6 @@ void Team::attack(Team* enemyTeam) {
         
         
         void Team::setBoss(Character *Boss){
-            Boss = Boss;        
+            this->Boss = Boss;        
             }
 }
